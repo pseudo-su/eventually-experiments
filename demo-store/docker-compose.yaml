@@ -1,0 +1,30 @@
+version: '3'
+services:
+
+  example_db:
+    container_name: "example_db"
+    image: "postgres"
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+      - .env.local
+    volumes:
+      - database-data:/var/lib/postgresql/data/ # persist data even if container shuts down
+
+  example_api:
+    container_name: "example_api"
+    build: .
+    depends_on:
+      - example_db
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+      - .env.local
+
+  # example_projection_builder:
+  #   container_name: "projection_builder"
+
+volumes:
+  database-data:
