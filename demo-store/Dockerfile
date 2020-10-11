@@ -1,49 +1,28 @@
-# https://shaneutt.com/blog/rust-fast-small-docker-image-builds/
+# Dockerfile for creating a statically-linked Rust application using docker's
+# multi-stage build feature. This also leverages the docker build cache to avoid
+# re-downloading dependencies if they have not changed.
+FROM rust:latest AS build
+WORKDIR /usr/src
 
-# ------------------------------------------------------------------------------
-# Cargo Build Stage
-# ------------------------------------------------------------------------------
-
-FROM rust:latest as cargo-build
-
-RUN apt-get update
-
-RUN apt-get install musl-tools -y
-
+# Download the target for static linking.
 RUN rustup target add x86_64-unknown-linux-musl
 
+# Create a dummy project and build the app's dependencies.
+# If the Cargo.toml or Cargo.lock files have not changed,
+# we can use the docker build cache and skip these (typically slow) steps.
+RUN USER=root cargo new demo-store
 WORKDIR /usr/src/demo-store
+COPY Cargo.toml Cargo.lock ./
+RUN cargo build --release
+RUN rm src/main.rs
 
-COPY Cargo.toml Cargo.toml
+# Copy the source and build the application.
+COPY src ./src
+RUN cargo install --target x86_64-unknown-linux-musl --path .
 
-RUN mkdir src
+RUN ls /usr/local/cargo/bin
 
-RUN echo "fn main() {println!(\"if you see this, the build broke\")}" > src/lib.rs
-
-RUN RUSTFLAGS=-Clinker=musl-gcc cargo build --release --target=x86_64-unknown-linux-musl
-
-RUN rm -f target/x86_64-unknown-linux-musl/release/deps/demo-store*
-
-COPY . .
-
-RUN RUSTFLAGS=-Clinker=musl-gcc cargo build --release --target=x86_64-unknown-linux-musl
-
-# ------------------------------------------------------------------------------
-# Final Stage
-# ------------------------------------------------------------------------------
-
-FROM alpine:latest
-
-RUN addgroup -g 1000 appuser
-
-RUN adduser -D -s /bin/sh -u 1000 -G appuser appuser
-
-WORKDIR /home/appuser/bin/
-
-COPY --from=cargo-build /usr/src/demo-store/target/x86_64-unknown-linux-musl/release/demo-store .
-
-RUN chown appuser:appuser demo-store
-
-USER appuser
-
-CMD ["./demo-store"]
+# Copy the statically-linked binary into a scratch container.
+FROM scratch
+COPY --from=build /usr/local/cargo/bin/demo-store* ./
+USER 1000

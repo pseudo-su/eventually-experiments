@@ -33,3 +33,9 @@ docker-compose up
 - [ ] ADMIN: List all orders
 - [ ] ADMIN: Dispatch order
 
+## Build and run
+
+```sh
+docker build -t demo-store .
+docker run --rm -it --init -p 8081:8080 demo-store ./demo-store-api
+```
