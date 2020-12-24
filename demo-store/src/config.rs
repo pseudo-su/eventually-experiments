@@ -6,19 +6,19 @@ pub struct Config {
     #[envconfig(from = "DB_HOST", default = "localhost")]
     pub db_host: String,
 
-    #[envconfig(from = "DB_PORT", default = "5432")]
+    #[envconfig(from = "DB_PORT", default = "5433")]
     pub db_port: u16,
 
-    #[envconfig(from = "DB_USERNAME", default = "postgres")]
+    #[envconfig(from = "DB_USERNAME", default = "user")]
     pub db_username: String,
 
     #[envconfig(from = "DB_PASSWORD", default = "password")]
     pub db_password: String,
 
-    #[envconfig(from = "DB_DATABASE", default = "postgres")]
+    #[envconfig(from = "DB_DATABASE", default = "demo-store-db")]
     pub db_database: String,
 
-    #[envconfig(from = "HTTP_PORT", default = "8080")]
+    #[envconfig(from = "HTTP_PORT", default = "8081")]
     pub http_port: u16,
 
     #[envconfig(from = "LOG_LEVEL", default = "debug")]
